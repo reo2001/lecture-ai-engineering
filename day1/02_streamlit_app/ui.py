@@ -31,17 +31,23 @@ def display_chat_page(pipe):
         st.session_state.feedback_given = False # フィードバック状態もリセット
 
         with st.spinner("モデルが回答を生成中..."):
-            answer, response_time = generate_response(pipe, user_question)
+            answer, response_time, char_length, token_count = generate_response(pipe, user_question)
             st.session_state.current_answer = answer
             st.session_state.response_time = response_time
-            # ここでrerunすると回答とフィードバックが一度に表示される
+            st.session_state.char_length = char_length
+            st.session_state.token_count = token_count
             st.rerun()
 
     # 回答が表示されるべきか判断 (質問があり、回答が生成済みで、まだフィードバックされていない)
     if st.session_state.current_question and st.session_state.current_answer:
         st.subheader("回答:")
         st.markdown(st.session_state.current_answer) # Markdownで表示
-        st.info(f"応答時間: {st.session_state.response_time:.2f}秒")
+        # st.info(f"応答時間: {st.session_state.response_time:.2f}秒")
+        # 📊 応答の評価指標を表示
+        with st.expander("📊 応答の評価指標"):
+            st.write(f"⏱ 応答時間: {st.session_state.response_time:.2f} 秒")
+            st.write(f"🧾 文字数: {st.session_state.char_length}")
+            st.write(f"🔤 トークン数: {st.session_state.token_count}")
 
         # フィードバックフォームを表示 (まだフィードバックされていない場合)
         if not st.session_state.feedback_given:
@@ -157,10 +163,12 @@ def display_history_list(history_df):
 
             # 評価指標の表示
             st.markdown("---")
-            cols = st.columns(3)
+            cols = st.columns(5)
             cols[0].metric("正確性スコア", f"{row['is_correct']:.1f}")
             cols[1].metric("応答時間(秒)", f"{row['response_time']:.2f}")
             cols[2].metric("単語数", f"{row['word_count']}")
+            cols[3].metric("文字数", f"{row['char_length']}" if pd.notna(row['char_length']) else "-")
+            cols[4].metric("トークン数", f"{row['token_count']}" if pd.notna(row['token_count']) else "-")
 
             cols = st.columns(3)
             # NaNの場合はハイフン表示

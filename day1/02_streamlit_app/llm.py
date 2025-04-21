@@ -34,7 +34,7 @@ def load_model():
 def generate_response(pipe, user_question):
     """LLMを使用して質問に対する回答を生成する"""
     if pipe is None:
-        return "モデルがロードされていないため、回答を生成できません。", 0
+        return "モデルがロードされていないため、回答を生成できません。", 0, 0, 0
 
     try:
         start_time = time.time()
@@ -76,12 +76,16 @@ def generate_response(pipe, user_question):
 
         end_time = time.time()
         response_time = end_time - start_time
+        import re
+        char_length = len(assistant_response)
+        token_count = len(re.findall(r"\w+", assistant_response))
+
         print(f"Generated response in {response_time:.2f}s") # デバッグ用
-        return assistant_response, response_time
+        return assistant_response, response_time, char_length, token_count
 
     except Exception as e:
         st.error(f"回答生成中にエラーが発生しました: {e}")
         # エラーの詳細をログに出力
         import traceback
         traceback.print_exc()
-        return f"エラーが発生しました: {str(e)}", 0
+        return f"エラーが発生しました: {str(e)}", 0, 0, 0
