@@ -49,13 +49,12 @@ AIエンジニアリング実践講座で取り組んだ演習成果物をまと
   - LLM応答の文字数・トークン数を計測し、Streamlit画面へ表示
   - 履歴画面の評価指標表示を拡張
 - `day5/演習3/tests/test_saved_model.py`
-  - 保存済みTitanicモデルを検証するスクリプトを追加
-  - ポートフォリオ整理時にpytestの `test_*` + `assert` 形式へ修正
+  - 保存済みTitanicモデルの存在、推論件数、出力ラベルを検証するpytestテストを実装
 - `.github/workflows/test.yml`
   - `master` へのpushでCIを起動するトリガーを追加
   - モデル検証をCI対象へ含め、依存関係を専用requirementsへ整理
 
-今回の整理では、上記の評価指標がDBへ保存されていなかった不整合も補完しています。
+上記の評価指標をSQLiteへ保存し、履歴・分析画面から確認できるように実装しています。
 
 ## Technologies
 
