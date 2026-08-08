@@ -1,9 +1,12 @@
 # python_client.py
-# このコードは、ngrokで公開されたAPIにアクセスするPythonクライアントの例です
+# このコードは、公開されたFastAPIへアクセスするPythonクライアントの例です
+
+import json
+import os
+import time
 
 import requests
-import json
-import time
+
 
 class LLMClient:
     """LLM API クライアントクラス"""
@@ -13,7 +16,7 @@ class LLMClient:
         初期化
         
         Args:
-            api_url (str): API のベース URL（ngrok URL）
+            api_url (str): APIのベースURL
         """
         self.api_url = api_url.rstrip('/')
         self.session = requests.Session()
@@ -66,11 +69,12 @@ class LLMClient:
 
 # 使用例
 if __name__ == "__main__":
-    # ngrok URLを設定（実際のURLに置き換えてください）
-    NGROK_URL = "https://your-ngrok-url.ngrok.url"
+    api_url = os.environ.get("LLM_API_URL")
+    if not api_url:
+        raise RuntimeError("LLM_API_URL環境変数にFastAPIの公開URLを設定してください。")
     
     # クライアントの初期化
-    client = LLMClient(NGROK_URL)
+    client = LLMClient(api_url)
     
     # ヘルスチェック
     print("Health check:")
@@ -79,9 +83,7 @@ if __name__ == "__main__":
     
     # 単一の質問
     print("Simple question:")
-    result = client.generate([
-        {"prompt": "AIについて100文字で教えてください"}
-    ])
+    result = client.generate("AIについて100文字で教えてください")
     print(f"Response: {result['generated_text']}")
     print(f"Model processing time: {result['response_time']:.2f}s")
-    print(f"Total request time: {result['total_request_time']:.2f}s")    
+    print(f"Total request time: {result['total_request_time']:.2f}s")
