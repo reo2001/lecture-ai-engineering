@@ -21,6 +21,10 @@ def display_chat_page(pipe):
         st.session_state.current_answer = ""
     if "response_time" not in st.session_state:
         st.session_state.response_time = 0.0
+    if "char_length" not in st.session_state:
+        st.session_state.char_length = 0
+    if "token_count" not in st.session_state:
+        st.session_state.token_count = 0
     if "feedback_given" not in st.session_state:
         st.session_state.feedback_given = False
 
@@ -59,6 +63,8 @@ def display_chat_page(pipe):
                   st.session_state.current_question = ""
                   st.session_state.current_answer = ""
                   st.session_state.response_time = 0.0
+                  st.session_state.char_length = 0
+                  st.session_state.token_count = 0
                   st.session_state.feedback_given = False
                   st.rerun() # 画面をクリア
 
@@ -87,7 +93,9 @@ def display_feedback_form():
                 combined_feedback,
                 correct_answer,
                 is_correct,
-                st.session_state.response_time
+                st.session_state.response_time,
+                st.session_state.char_length,
+                st.session_state.token_count,
             )
             st.session_state.feedback_given = True
             st.success("フィードバックが保存されました！")
@@ -167,8 +175,10 @@ def display_history_list(history_df):
             cols[0].metric("正確性スコア", f"{row['is_correct']:.1f}")
             cols[1].metric("応答時間(秒)", f"{row['response_time']:.2f}")
             cols[2].metric("単語数", f"{row['word_count']}")
-            cols[3].metric("文字数", f"{row['char_length']}" if pd.notna(row['char_length']) else "-")
-            cols[4].metric("トークン数", f"{row['token_count']}" if pd.notna(row['token_count']) else "-")
+            char_length = row.get("char_length")
+            token_count = row.get("token_count")
+            cols[3].metric("文字数", f"{char_length}" if pd.notna(char_length) else "-")
+            cols[4].metric("トークン数", f"{token_count}" if pd.notna(token_count) else "-")
 
             cols = st.columns(3)
             # NaNの場合はハイフン表示
@@ -202,7 +212,14 @@ def display_metrics_analysis(history_df):
 
     # 応答時間と他の指標の関係
     st.write("##### 応答時間とその他の指標の関係")
-    metric_options = ["bleu_score", "similarity_score", "relevance_score", "word_count"]
+    metric_options = [
+        "bleu_score",
+        "similarity_score",
+        "relevance_score",
+        "word_count",
+        "char_length",
+        "token_count",
+    ]
     # 利用可能な指標のみ選択肢に含める
     valid_metric_options = [m for m in metric_options if m in analysis_df.columns and analysis_df[m].notna().any()]
 
@@ -230,7 +247,15 @@ def display_metrics_analysis(history_df):
 
     # 全体の評価指標の統計
     st.write("##### 評価指標の統計")
-    stats_cols = ['response_time', 'bleu_score', 'similarity_score', 'word_count', 'relevance_score']
+    stats_cols = [
+        "response_time",
+        "bleu_score",
+        "similarity_score",
+        "word_count",
+        "char_length",
+        "token_count",
+        "relevance_score",
+    ]
     valid_stats_cols = [c for c in stats_cols if c in analysis_df.columns and analysis_df[c].notna().any()]
     if valid_stats_cols:
         metrics_stats = analysis_df[valid_stats_cols].describe()

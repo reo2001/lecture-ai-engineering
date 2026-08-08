@@ -2,7 +2,6 @@ import os
 import pytest
 import pandas as pd
 import numpy as np
-import pickle
 import time
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -93,11 +92,6 @@ def train_model(sample_data, preprocessor):
 
     # モデルの学習
     model.fit(X_train, y_train)
-
-    # モデルの保存
-    os.makedirs(MODEL_DIR, exist_ok=True)
-    with open(MODEL_PATH, "wb") as f:
-        pickle.dump(model, f)
 
     return model, X_test, y_test
 
