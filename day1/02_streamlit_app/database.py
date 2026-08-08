@@ -1,5 +1,6 @@
 # database.py
 import sqlite3
+import re
 import pandas as pd
 from datetime import datetime
 import streamlit as st
@@ -21,6 +22,8 @@ CREATE TABLE IF NOT EXISTS {TABLE_NAME}
  bleu_score REAL,
  similarity_score REAL,
  word_count INTEGER,
+ char_length INTEGER,
+ token_count INTEGER,
  relevance_score REAL)
 '''
 
@@ -31,6 +34,17 @@ def init_db():
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
         c.execute(SCHEMA)
+
+        # 既存DBにも追加の評価指標カラムを適用する
+        existing_columns = {
+            row[1] for row in c.execute(f"PRAGMA table_info({TABLE_NAME})")
+        }
+        for column_name in ("char_length", "token_count"):
+            if column_name not in existing_columns:
+                c.execute(
+                    f"ALTER TABLE {TABLE_NAME} ADD COLUMN {column_name} INTEGER"
+                )
+
         conn.commit()
         conn.close()
         print(f"Database '{DB_FILE}' initialized successfully.")
@@ -39,7 +53,16 @@ def init_db():
         raise e # エラーを再発生させてアプリの起動を止めるか、適切に処理する
 
 # --- データ操作関数 ---
-def save_to_db(question, answer, feedback, correct_answer, is_correct, response_time):
+def save_to_db(
+    question,
+    answer,
+    feedback,
+    correct_answer,
+    is_correct,
+    response_time,
+    char_length=None,
+    token_count=None,
+):
     """チャット履歴と評価指標をデータベースに保存する"""
     conn = None
     try:
@@ -52,12 +75,19 @@ def save_to_db(question, answer, feedback, correct_answer, is_correct, response_
             answer, correct_answer
         )
 
+        if char_length is None:
+            char_length = len(answer)
+        if token_count is None:
+            token_count = len(re.findall(r"\w+", answer))
+
         c.execute(f'''
         INSERT INTO {TABLE_NAME} (timestamp, question, answer, feedback, correct_answer, is_correct,
-                                 response_time, bleu_score, similarity_score, word_count, relevance_score)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                 response_time, bleu_score, similarity_score, word_count,
+                                 char_length, token_count, relevance_score)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (timestamp, question, answer, feedback, correct_answer, is_correct,
-             response_time, bleu_score, similarity_score, word_count, relevance_score))
+             response_time, bleu_score, similarity_score, word_count,
+             char_length, token_count, relevance_score))
         conn.commit()
         print("Data saved to DB successfully.") # デバッグ用
     except sqlite3.Error as e:
